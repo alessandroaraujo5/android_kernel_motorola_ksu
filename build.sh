@@ -23,7 +23,7 @@ function KERNEL_COMPILE() {
     rm -rf KernelSU drivers/kernelsu
     git restore drivers/Makefile drivers/Kconfig
 
-    echo "[*] Aplicando KernelSU (legacy)"
+    echo "[*] Aplicando KernelSU (legacy hook)"
     curl -LSs "https://raw.githubusercontent.com/KernelSU-Next/KernelSU-Next/next/kernel/setup.sh" \
     | bash -s legacy
 
@@ -41,9 +41,15 @@ function KERNEL_COMPILE() {
     echo "[*] Carregando defconfig"
     make O=out ARCH=arm64 guamp_defconfig
 
-	# Build the kernel with clang and log output
-	make -j$(nproc --all) O=out ARCH=arm64 CC=clang LD=ld.lld AS=llvm-as AR=llvm-ar NM=llvm-nm OBJCOPY=llvm-objcopy OBJDUMP=llvm-objdump STRIP=llvm-strip CROSS_COMPILE=aarch64-linux-gnu- CROSS_COMPILE_COMPAT=arm-linux-gnueabi- LLVM=1 LLVM_IAS=1 2>&1
-}
+    echo "[*] Compilando kernel (sua linha original)"
+    make -j$(nproc --all) \
+        O=out ARCH=arm64 \
+        CC=clang LD=ld.lld \
+        AS=llvm-as AR=llvm-ar NM=llvm-nm \
+        OBJCOPY=llvm-objcopy OBJDUMP=llvm-objdump STRIP=llvm-strip \
+        CROSS_COMPILE=aarch64-linux-gnu- \
+        CROSS_COMPILE_COMPAT=arm-linux-gnueabi- \
+        LLVM=1 LLVM_IAS=1
 
     echo "[*] Garantindo Image.gz"
     if [[ ! -f "$GZIP" && -f "$OBJ" ]]; then
@@ -87,7 +93,11 @@ function KERNEL_RESULT() {
     zip -r9 "$1" *
 
     echo "[*] Enviando para Pixeldrain"
-    curl -T "$1" -u :dc4f2d6d-ef86-4241-af44-44f311a0ecb9 https://pixeldrain.com/api/file/
+    UPLOAD_RESPONSE=$(curl -s -T "$1" -u :dc4f2d6d-ef86-4241-af44-44f311a0ecb9 https://pixeldrain.com/api/file/)
+
+    echo
+    echo "🔗 Link do kernel:"
+    echo "$UPLOAD_RESPONSE"
 
     cd ..
 }
