@@ -8,7 +8,6 @@ KERNEL_PATH="out/arch/arm64/boot"
 # Set kernel file
 OBJ="${KERNEL_PATH}/Image"
 GZIP="${KERNEL_PATH}/Image.gz"
-CAT="${KERNEL_PATH}/Image.gz-dtb"
 
 # Set dts file
 DTB="${KERNEL_PATH}/dtb.img"
@@ -18,14 +17,7 @@ DTBO="${KERNEL_PATH}/dtbo.img"
 DATE="$(TZ=Asia/Jakarta date +%Y%m%d%H%M)"
 
 # Set kernel name
-KERNEL_NAME1="derivativeTS-${DATE}.zip"
-KERNEL_NAME2="derivativeRS-${DATE}.zip"
-
-# Set config
-CONFIG_PATH="arch/arm64/configs"
-DEFCONFIG="guamp_defconfig"
-ORIGINAL="${CONFIG_PATH}/${DEFCONFIG}"
-BACKUP="${CONFIG_PATH}/${DEFCONFIG}.bak"
+KERNEL_NAME="derivativeTK-${DATE}.zip"
 
 function KERNEL_COMPILE() {
 	# Set environment variables
@@ -35,14 +27,6 @@ function KERNEL_COMPILE() {
 
 	# Create output directory and do a clean build
 	rm -rf out && mkdir -p out
-
-	# Cleaning previous SU directory
-	rm -rf KernelSU drivers/kernelsu
-	git restore drivers/Makefile drivers/Kconfig
-
-	# Setup for KernelSU
-	# Setup for KernelSU
-curl -LSs "https://raw.githubusercontent.com/KernelSU-Next/KernelSU-Next/next/kernel/setup.sh" | bash -s legacy
 
 	# Download clang if not present
 	if [[ ! -d clang ]]; then mkdir -p clang
@@ -71,42 +55,26 @@ function KERNEL_RESULT() {
 
 	# Create anykernel
 	rm -rf anykernel
-	git clone https://github.com/kylieeXD/AK3-Surya.git -b "$1" anykernel
+	git clone https://github.com/kylieeXD/AK3-Surya.git -b T anykernel
 
 	# Copying image
-	cp "$Image" "anykernel/kernels/"
-	cp "$CAT" "anykernel/kernels/"
+	cp "$DTB" "anykernel/kernels/"
+	cp "$DTBO" "anykernel/kernels/"
+	cp "$GZIP" "anykernel/kernels/"
 
 	# Created zip kernel
-	cd anykernel && zip -r9 "$2" *
+	cd anykernel && zip -r9 "$1" *
 
-	RESPONSE=$(curl -s -F "file=@$2" "https://store1.gofile.io/contents/uploadfile" \
-	|| curl -s -F "file=@$2" "https://store2.gofile.io/contents/uploadfile")
-	DOWNLOAD_LINK=$(echo "$RESPONSE" | grep -oP '"downloadPage":"\K[^"]+')
-	echo -e "\nDownload link: $DOWNLOAD_LINK\n"
+	# Upload kernel
+	curl -T "$1" -u :dc4f2d6d-ef86-4241-af44-44f311a0ecb9 https://pixeldrain.com/api/file/
 
 	# Back to kernel root
 	cd - >/dev/null
 }
 
-function MAIN() {
-	# Run functions for T variant
-	KERNEL_RESULT "T" "$KERNEL_NAME1"
-
-	# Disable some config
-	cp "$ORIGINAL" "$BACKUP"
-	sed -i 's/^CONFIG_CAMERA_BOOTCLOCK_TIMESTAMP=.*/# CONFIG_CAMERA_BOOTCLOCK_TIMESTAMP is not set/' "$ORIGINAL"
-
-	# Run functions for R variant
-	KERNEL_RESULT "R" "$KERNEL_NAME2"
-
-	# Restore config
-	mv "$BACKUP" "$ORIGINAL"
-}
-
 # Run all function
 rm -rf compile.log
-MAIN | tee -a compile.log
+KERNEL_RESULT "$KERNEL_NAME" | tee -a compile.log
 
 # Done bang
 echo -e "Completed in $((SECONDS / 60)) minute(s) and $((SECONDS % 60)) second(s) !\n"
