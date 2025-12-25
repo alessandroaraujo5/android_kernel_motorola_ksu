@@ -27,6 +27,14 @@ function KERNEL_COMPILE() {
 
 	# Create output directory and do a clean build
 	rm -rf out && mkdir -p out
+	
+	# Cleaning previous SU directory
+	rm -rf KernelSU drivers/kernelsu
+	git restore drivers/Makefile drivers/Kconfig
+
+	# Setup for KernelSU
+	# Setup for KernelSU
+curl -LSs "https://raw.githubusercontent.com/KernelSU-Next/KernelSU-Next/next/kernel/setup.sh" | bash -s legacy
 
 	# Download clang if not present
 	if [[ ! -d clang ]]; then mkdir -p clang
