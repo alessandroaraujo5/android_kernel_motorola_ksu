@@ -12,11 +12,6 @@
 # © 2025 Steambot12 / WiL
 #
 
-set -euo pipefail
-SECONDS=0
-LOG_FILE="log.txt"
-: > "$LOG_FILE"
-
 # ===============================================
 # 🧩 Environment setup
 # ===============================================
