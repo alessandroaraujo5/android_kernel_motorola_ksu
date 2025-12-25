@@ -41,13 +41,9 @@ function KERNEL_COMPILE() {
     echo "[*] Carregando defconfig"
     make O=out ARCH=arm64 guamp_defconfig
 
-    echo "[*] Compilando kernel"
-    make -j$(nproc --all) \
-        O=out ARCH=arm64 \
-        CC=clang LD=ld.lld \
-        CROSS_COMPILE=aarch64-linux-gnu- \
-        CROSS_COMPILE_COMPAT=arm-linux-gnueabi- \
-        LLVM=1 LLVM_IAS=1
+	# Build the kernel with clang and log output
+	make -j$(nproc --all) O=out ARCH=arm64 CC=clang LD=ld.lld AS=llvm-as AR=llvm-ar NM=llvm-nm OBJCOPY=llvm-objcopy OBJDUMP=llvm-objdump STRIP=llvm-strip CROSS_COMPILE=aarch64-linux-gnu- CROSS_COMPILE_COMPAT=arm-linux-gnueabi- LLVM=1 LLVM_IAS=1 2>&1
+}
 
     echo "[*] Garantindo Image.gz"
     if [[ ! -f "$GZIP" && -f "$OBJ" ]]; then
