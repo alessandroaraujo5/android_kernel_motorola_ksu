@@ -134,12 +134,12 @@ jobs:
           mkdir -p build/out/$MODEL
           cp out/arch/arm64/boot/Image build/out/$MODEL/
 
-          toolchain/mkdtimg cfg_create \
+          mkdtimg cfg_create \
             build/out/$MODEL/dtb.img \
             build/dtconfigs/exynos9830.cfg \
             -d out/arch/arm64/boot/dts/exynos
 
-          toolchain/mkdtimg cfg_create \
+          mkdtimg cfg_create \
             build/out/$MODEL/dtbo.img \
             build/dtconfigs/$MODEL.cfg \
             -d out/arch/arm64/boot/dts/samsung
@@ -149,7 +149,7 @@ jobs:
             cpio -o -H newc -R root:root | gzip > ../out/$MODEL/ramdisk.cpio.gz
           popd
 
-          toolchain/mkbootimg \
+          mkbootimg \
             --board $BOARD \
             --kernel build/out/$MODEL/Image \
             --ramdisk build/out/$MODEL/ramdisk.cpio.gz \
