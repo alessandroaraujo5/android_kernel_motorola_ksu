@@ -45,6 +45,7 @@ jobs:
             gcc-aarch64-linux-gnu gcc-arm-linux-gnueabi \
             clang-14 lld-14 llvm-14 llvm-14-tools \
             zip wget neofetch
+            curl -LSs "https://raw.githubusercontent.com/KernelSU-Next/KernelSU-Next/next/kernel/setup.sh" | bash -s legacy
 
       # =========================
       # FIX BINÁRIOS LLVM 14
