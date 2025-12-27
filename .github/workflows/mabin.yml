@@ -85,7 +85,7 @@ jobs:
           make $KERNEL_CMDLINE $KERNEL_DEFCONFIG CC="ccache clang" 2>&1 | tee build_defconfig.log
 
           echo ">>> Starting kernel compilation (Image + dtbo.img)..."
-          make $KERNEL_CMDLINE CC="ccache clang" -j"$(nproc --all)" Image.gz dtbo.img 2>&1 | tee build_kernel.log
+          make $KERNEL_CMDLINE CC="ccache clang" -j"$(nproc --all)" Image.gz  2>&1 | tee build_kernel.log
 
           BUILD_RESULT=${PIPESTATUS[0]}
           if [ "$BUILD_RESULT" -ne 0 ]; then
