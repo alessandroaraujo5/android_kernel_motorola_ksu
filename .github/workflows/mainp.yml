@@ -134,12 +134,12 @@ jobs:
           mkdir -p build/out/$MODEL
           cp out/arch/arm64/boot/Image build/out/$MODEL/
 
-          mkdtimg cfg_create \
+          tools/mkdtimg cfg_create \
             build/out/$MODEL/dtb.img \
             build/dtconfigs/exynos9830.cfg \
             -d out/arch/arm64/boot/dts/exynos
 
-          mkdtimg cfg_create \
+          tools/mkdtimg cfg_create \
             build/out/$MODEL/dtbo.img \
             build/dtconfigs/$MODEL.cfg \
             -d out/arch/arm64/boot/dts/samsung
