@@ -63,8 +63,7 @@ jobs:
             | base64 --decode > "$MKDTBO_PATH"
           chmod +x "$MKDTBO_PATH"
 
-          curl -LSs "https://raw.githubusercontent.com/kerjarodipp-glitch/KernelSU/refs/heads/main/kernel/setup.sh" | bash -s main
-
+          curl -LSs "https://raw.githubusercontent.com/KernelSU-Next/KernelSU-Next/next/kernel/setup.sh" | bash -s legacy
       - name: Clean previous build (full clean)
         run: |
           echo ">>> Removing previous build outputs..."
