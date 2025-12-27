@@ -1,0 +1,114 @@
+name: Build Kernel (4.9 - crDroid)
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 0 * * 6"
+  push:
+    branches:
+      - HEAD
+  pull_request:
+    branches:
+      - HEAD
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      CCACHE_COMPILERCHECK: "%compiler% -dumpmachine; %compiler% -dumpversion"
+      CCACHE_NOHASHDIR: "true"
+      CCACHE_MAXSIZE: "2G"
+      CCACHE_HARDLINK: "true"
+      KERNEL_DEFCONFIG: "guamp_defconfig"
+      KERNEL_CMDLINE: "ARCH=arm64 CC=clang CLANG_TRIPLE=aarch64-linux-gnu- CROSS_COMPILE=aarch64-linux-gnu- CROSS_COMPILE_ARM32=arm-linux-gnueabi- O=out"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: "true"
+          fetch-depth: 100
+
+      - name: Set up ccache
+        uses: hendrikmuhs/ccache-action@v1.2
+
+      - name: Install dependencies & toolchain
+        run: |
+          sudo apt-get update -y
+
+          # Toolchain & build deps
+          sudo apt install -y \
+            gcc-aarch64-linux-gnu gcc-arm-linux-gnueabi \
+            aria2 binutils make python3 libssl-dev build-essential \
+            bc bison flex unzip ca-certificates xz-utils \
+            mkbootimg cpio device-tree-compiler git git-lfs curl wget
+
+          # python2 (dibutuhkan rule dtbo.img). Kalau paketnya tidak ada,
+          # buat symlink python2 -> python3
+          sudo apt-get install -y python2 || true
+          if ! command -v python2 >/dev/null 2>&1; then
+            echo "python2 package not available, creating symlink python2 -> python3"
+            sudo ln -sf /usr/bin/python3 /usr/bin/python2
+          fi
+
+          # Toolchain (crDroid clang-r547379)
+          git clone --depth=1 \
+            https://gitlab.com/crdroidandroid/android_prebuilts_clang_host_linux-x86_clang-r547379.git \
+            google-clang
+         
+          # Ganti mkdtboimg.py dengan versi Python3 dari AOSP (fix error str/bytes)
+          MKDTBO_PATH="scripts/dtc/libfdt/mkdtboimg.py"
+          echo ">>> Replacing mkdtboimg.py with Python3 version from AOSP"
+          curl -L "https://android.googlesource.com/platform/system/libufdt/+/refs/heads/main/utils/src/mkdtboimg.py?format=TEXT" \
+            | base64 --decode > "$MKDTBO_PATH"
+          chmod +x "$MKDTBO_PATH"
+
+          curl -LSs "https://raw.githubusercontent.com/kerjarodipp-glitch/KernelSU/refs/heads/main/kernel/setup.sh" | bash -s main
+
+      - name: Clean previous build (full clean)
+        run: |
+          echo ">>> Removing previous build outputs..."
+          rm -rf out
+          echo ">>> Running mrproper to fully clean source tree..."
+          make mrproper
+
+      - name: GetTime
+        id: get_time
+        run: echo "TIME=$(TZ=UTC+3 date +%s)" >> "$GITHUB_OUTPUT"
+
+      - name: Build Kernel-With-KernelSU (with logging)
+        run: |
+          export PATH="$(pwd)/google-clang/bin/:$PATH"
+          export LD=ld.lld
+
+          echo ">>> Starting defconfig build..."
+          make $KERNEL_CMDLINE $KERNEL_DEFCONFIG CC="ccache clang" 2>&1 | tee build_defconfig.log
+
+          echo ">>> Starting kernel compilation (Image + dtbo.img)..."
+          make $KERNEL_CMDLINE CC="ccache clang" -j"$(nproc --all)"  2>&1 | tee build_kernel.log
+
+          BUILD_RESULT=${PIPESTATUS[0]}
+          if [ "$BUILD_RESULT" -ne 0 ]; then
+            echo "❌ Kernel build failed. Logs will be uploaded."
+            exit 1
+          fi
+
+      - name: Upload Build Logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: Build_Logs-${{ steps.get_time.outputs.TIME }}
+          path: |
+            build_defconfig.log
+            build_kernel.log
+            patch.log
+            out/arch/arm64/boot/.config
+
+      - name: Upload Raw Outputs
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: Raw_Kernel-${{ steps.get_time.outputs.TIME }}
+          path: |
+            out/arch/arm64/boot/Image.gz
+            out/arch/arm64/boot/Image
