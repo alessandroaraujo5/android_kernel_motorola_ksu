@@ -63,7 +63,8 @@ jobs:
             | base64 --decode > "$MKDTBO_PATH"
           chmod +x "$MKDTBO_PATH"
 
-          curl -LSs "https://raw.githubusercontent.com/KernelSU-Next/KernelSU-Next/next/kernel/setup.sh" | bash -s legacy
+          curl -LSs "https://raw.githubusercontent.com/rsuntk/KernelSU/main/kernel/setup.sh" | bash -s main
+
       - name: Clean previous build (full clean)
         run: |
           echo ">>> Removing previous build outputs..."
