@@ -70,13 +70,13 @@ jobs:
           echo ">>> Removing previous build outputs..."
           rm -rf out
           echo ">>> Running mrproper to fully clean source tree..."
-          ls
+          make mrproper
 
       - name: GetTime
         id: get_time
         run: echo "TIME=$(TZ=UTC+3 date +%s)" >> "$GITHUB_OUTPUT"
 
-      - name: Build Kernel-With-KernelSU (with logging)
+      - name: Build KernelSU-Next (with logging)
         run: |
           export PATH="$(pwd)/google-clang/bin/:$PATH"
           export LD=ld.lld
