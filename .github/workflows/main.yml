@@ -70,7 +70,7 @@ jobs:
           echo ">>> Removing previous build outputs..."
           rm -rf out
           echo ">>> Running mrproper to fully clean source tree..."
-          make mrproper
+          ls
 
       - name: GetTime
         id: get_time
